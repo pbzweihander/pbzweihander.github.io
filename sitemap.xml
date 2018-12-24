@@ -1,21 +1,21 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     
         <url>
-            <loc>http://localhost:8080/arch-linux-installation/</loc>
+            <loc>pbzweihander.github.io/arch-linux-installation/</loc>
             
                 <lastmod>2018-10-26</lastmod>
             
         </url>
     
         <url>
-            <loc>http://localhost:8080/arch-raid0/</loc>
+            <loc>pbzweihander.github.io/arch-raid0/</loc>
             
                 <lastmod>2018-10-26</lastmod>
             
         </url>
     
         <url>
-            <loc>http://localhost:8080/how-to-write-email-with-military-precision/</loc>
+            <loc>pbzweihander.github.io/how-to-write-email-with-military-precision/</loc>
             
                 <lastmod>2017-10-30</lastmod>
             
@@ -23,7 +23,7 @@
     
     
         <url>
-            <loc>http://localhost:8080/</loc>
+            <loc>pbzweihander.github.io/</loc>
         </url>
     
     
