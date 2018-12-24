@@ -1,0 +1,55 @@
+version: 2
+
+workflows:
+  version: 2
+  flow:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only:
+                - content
+      - deploy:
+          requires:
+            - build
+
+jobs:
+  build:
+    machine:
+      enabled: true
+    steps:
+      - checkout
+      - run:
+          name: Pulling submodules
+          command: |
+            git submodule init
+            git submodule update --remote
+      - run:
+          name: Installing zola
+          command: |
+            curl -s -L https://github.com/getzola/zola/releases/download/v0.5.0/zola-v0.5.0-x86_64-unknown-linux-gnu.tar.gz | sudo tar xvzf - -C /usr/local/bin
+      - run:
+          name: Building
+          command: |
+            zola build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - public
+
+  deploy:
+    machine:
+      enabled: true
+    steps:
+      - add_ssh_keys
+      - checkout
+      - run:
+          name: Installing ghp-import
+          command: |
+            pip install ghp-import
+      - attach_workspace:
+          at: .
+      - run:
+          name: Deploying
+          command: |
+            ghp-import -pfn -b master public
