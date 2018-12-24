@@ -1,8 +1,0 @@
-base_url = "http://localhost:8080"
-
-title = "Thinking With Rust"
-description = "@pbzweihander"
-
-theme = "hyde"
-
-sort_by = "date"
