@@ -47,7 +47,10 @@
             
 <div class="post">
   <h1 class="post-title">Arch with RAID 0</h1>
-  <span class="post-date">2018-10-26</span>
+  <span class="post-date">
+    2018-10-26
+    <a href="#comment" style="position: absolute;right: 15px;">To Comments ↓</a>
+  </span>
   <p>RAID 0로 Arch Linux 설치하기</p>
 <p>2개의 디스크가 각각 <code>sda</code>, <code>sdb</code> 라고 가정하고,<br />
 <code>sda1</code> 을 boot, <code>sdb1</code> 을 swap으로 설정, 디스크의 남은 공간 <code>sda2</code>, <code>sdb2</code> 를 RAID 0로 묶는다.</p>
@@ -138,6 +141,11 @@ swapon /dev/sdb1
 </ol>
 <p>이후는 <a href="/arch-linux-installation/">Arch Linux Installation</a>를 따르면 된다.</p>
 
+</div>
+<div class="comment" id="comment">
+  <script src="https://utteranc.es/client.js" repo="pbzweihander/pbzweihander.github.io" issue-term="pathname" theme="github-light"
+    crossorigin="anonymous" async>
+    </script>
 </div>
 
         </div>
