@@ -11,6 +11,7 @@ date = 2018-10-26
 - [설치](#%EC%84%A4%EC%B9%98)
 - [시스템 기본 설정](#%EC%8B%9C%EC%8A%A4%ED%85%9C-%EA%B8%B0%EB%B3%B8-%EC%84%A4%EC%A0%95)
 - [재부팅](#%EC%9E%AC%EB%B6%80%ED%8C%85)
+- \---
 - [네트워크 설정](#%EB%84%A4%ED%8A%B8%EC%9B%8C%ED%81%AC-%EC%84%A4%EC%A0%95)
   - [NetworkManager](#networkmanager)
   - [무선 네트워크](#%EB%AC%B4%EC%84%A0-%EB%84%A4%ED%8A%B8%EC%9B%8C%ED%81%AC)
@@ -170,6 +171,8 @@ umount -R /mnt/boot
 umount -R /mnt
 reboot
 ```
+
+---
 
 ## 네트워크 설정
 
