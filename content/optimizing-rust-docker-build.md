@@ -102,10 +102,10 @@ debian이면 더 좋겠죠? 근데 만약 더 줄이고 싶다면?
 
 ### With musl
 
-Docker에는 `scratch` 라는 이름의, 아무것도 없는 alpine linux에서 시작할 수 있는 base image가 있습니다.
+Docker에는 `scratch` 라는 이름의, 정말 아무것도 없는 base image가 있습니다.
 근데 여기는 정말 아무런 library도 없기 때문에, 우리 바이너리가 필요한 library들을 직접 설치해줘야 합니다.
 
-아니면.. musl을 통해 모든 dependency를 binary 안에 통합시켜버리는 방법이 있죠.
+아니면.. musl을 통해 모든 dependency를 한 binary 안에 통합시켜버리는 방법이 있죠.
 
 ```Dockerfile
 # muslrust를 통해 빌드합니다
