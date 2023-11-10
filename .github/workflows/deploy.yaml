@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: shalzz/zola-deploy-action@v0.17
+    - uses: shalzz/zola-deploy-action@v0.17.2
       env:
         PAGES_BRANCH: gh-pages
         TOKEN: ${{ secrets.GITHUB_TOKEN }}
