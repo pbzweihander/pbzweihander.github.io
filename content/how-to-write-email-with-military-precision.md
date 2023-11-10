@@ -24,7 +24,7 @@ date = 2017-10-30
 
 ## 2. Bottom Line Up Front (BLUF)
 
-BLUF는 메일의 처음에 나오는 짧은 문장을 의미한다. (군대에선 모든 것을 줄여서 말한다) 이 BLUF는 육하원칙(누가, 무엇을, 어디서, 언제, 왜, 어떻게) 메일의 목적과 수신자의 행동에 대해 명시한다. 효과적인 BLUF는 수신자에게 가장 중요한 정보를 함축하여 전달한다. [Air Force Handbook](http://static.e-publishing.af.mil/production/1/saf_cio_a6/publication/afh33-337/afh33-337.pdf) 에서 발췌한 BLUF의 예를 보자:
+BLUF는 메일의 처음에 나오는 짧은 문장을 의미한다. (군대에선 모든 것을 줄여서 말한다) 이 BLUF는 육하원칙(누가, 무엇을, 어디서, 언제, 왜, 어떻게) 메일의 목적과 수신자의 행동에 대해 명시한다. 효과적인 BLUF는 수신자에게 가장 중요한 정보를 함축하여 전달한다. [Air Force Handbook](https://static.e-publishing.af.mil/production/1/saf_cn/publication/dafh33-337/dafh33-337.pdf) 에서 발췌한 BLUF의 예를 보자:
 
 > BLUF: 13년 10월 29일 부터, 모든 Air Force Doctrine Document(AFDDs)는 폐지되었고, core doctrine volume과 doctrine annex로 대체되었다.
 
