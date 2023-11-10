@@ -1,0 +1,18 @@
+name: deploy
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: shalzz/zola-deploy-action@v0.17
+      env:
+        PAGES_BRANCH: gh-pages
+        TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        BUILD_ONLY: ${{ github.ref != 'refs/heads/main' }}
