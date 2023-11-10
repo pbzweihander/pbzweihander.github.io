@@ -7,27 +7,27 @@ date = 2018-10-26
 > This guide is for personal use, written in Korean, and not guaranteed for complete and successful installation.  
 > Please refer to [arch linux wiki](https://wiki.archlinux.org/index.php/Installation_guide) for actual guide.
 
-- [설치 전 할 일](#%EC%84%A4%EC%B9%98-%EC%A0%84-%ED%95%A0-%EC%9D%BC)
-- [설치](#%EC%84%A4%EC%B9%98)
-- [시스템 기본 설정](#%EC%8B%9C%EC%8A%A4%ED%85%9C-%EA%B8%B0%EB%B3%B8-%EC%84%A4%EC%A0%95)
-- [재부팅](#%EC%9E%AC%EB%B6%80%ED%8C%85)
+- [설치 전 할 일](#설치-전-할-일)
+- [설치](#설치)
+- [시스템 기본 설정](#시스템-기본-설정)
+- [재부팅](#재부팅)
 - \---
-- [네트워크 설정](#%EB%84%A4%ED%8A%B8%EC%9B%8C%ED%81%AC-%EC%84%A4%EC%A0%95)
+- [네트워크 설정](#네트워크-설정)
   - [NetworkManager](#networkmanager)
-  - [무선 네트워크](#%EB%AC%B4%EC%84%A0-%EB%84%A4%ED%8A%B8%EC%9B%8C%ED%81%AC)
-- [부트로더 설치](#%EB%B6%80%ED%8A%B8%EB%A1%9C%EB%8D%94-%EC%84%A4%EC%B9%98)
+  - [무선 네트워크](#무선-네트워크)
+- [부트로더 설치](#부트로더-설치)
   - [GRUB](#grub)
   - [systemd-boot](#systemd-boot)
-- [GUI 설치](#gui-%EC%84%A4%EC%B9%98)
+- [GUI 설치](#gui-설치)
   - [GNOME](#gnome)
   - [KDE](#kde)
   - [xfce4](#xfce4)
-- [기타](#%EA%B8%B0%ED%83%80)
-  - [linux-lts 설치](#linux-lts-%EC%84%A4%EC%B9%98)
-- [설치 중 문제가 발생했을 때](#%EC%84%A4%EC%B9%98-%EC%A4%91-%EB%AC%B8%EC%A0%9C%EA%B0%80-%EB%B0%9C%EC%83%9D%ED%96%88%EC%9D%84-%EB%95%8C)
-  - [PGP 키 에러가 날때](#pgp-%ED%82%A4-%EC%97%90%EB%9F%AC%EA%B0%80-%EB%82%A0%EB%95%8C)
+- [기타](#기타)
+  - [linux-lts 설치](#linux-lts-설치)
+- [설치 중 문제가 발생했을 때](#설치-중-문제가-발생했을-때)
+  - [PGP 키 에러가 날때](#pgp-키-에러가-날때)
 
-## 설치 전 할 일
+## 설치 전 할 일 {#설치-전-할-일}
 
 1. UEFI로 부팅되었는지 체크
 
@@ -83,7 +83,7 @@ date = 2018-10-26
     mount /dev/sda1 /mnt/boot
     ```
 
-## 설치
+## 설치 {#설치}
 
 1. `/etc/pacman.d/mirrorlist`에서 pacman 한국 미러 추가
 
@@ -100,7 +100,7 @@ date = 2018-10-26
     pacstrap /mnt base base-devel
     ```
 
-## 시스템 기본 설정
+## 시스템 기본 설정 {#시스템-기본-설정}
 
 1. fstab 파일 생성
 
@@ -163,7 +163,7 @@ date = 2018-10-26
 1. GUI 설치
     - [GUI 설치](#GUI-설치) 참고
 
-## 재부팅
+## 재부팅 {#재부팅}
 
 ```bash
 exit
@@ -174,7 +174,7 @@ reboot
 
 ---
 
-## 네트워크 설정
+## 네트워크 설정 {#네트워크-설정}
 
 [Arch Wiki/Network Configuration](https://wiki.archlinux.org/index.php/Network_configuration)
 
@@ -182,7 +182,7 @@ DHCP를 세팅하거나, NetworkManager를 설치하면 된다.
 
 GUI 환경을 세팅할거면 얌전히 NetworkManager를 설치하자.
 
-### NetworkManager
+### NetworkManager {#networkmanager}
 
 ```bash
 pacman -S networkmanager
@@ -191,13 +191,13 @@ systemctl enable NetworkManager.service
 
 시스템 트레이가 필요하면 `network-manager-applet` 설치
 
-### 무선 네트워크
+### 무선 네트워크 {#무선-네트워크}
 
 [Arch Wiki/Wireless Network Configuration](https://wiki.archlinux.org/index.php/Wireless_network_configuration) 참조
 
 `iw`, `wpa_supplicant`, `gnome-keyring`을 설치하면 대충 된다
 
-## 부트로더 설치
+## 부트로더 설치 {#부트로더-설치}
 
 [Arch Wiki/Category:Boot Loaders](https://wiki.archlinux.org/index.php/Category:Boot_loaders)
 
@@ -206,7 +206,7 @@ intel 또는 AMD CPU 사용자라면 [microcode](https://wiki.archlinux.org/inde
 - intel이라면 `intel-ucode`
 - AMD라면 `amd-ucode`
 
-### GRUB
+### GRUB {#GRUB}
 
 1. `grub`과 `efibootmgr` 설치
 1. 부트로더 설치
@@ -223,7 +223,7 @@ intel 또는 AMD CPU 사용자라면 [microcode](https://wiki.archlinux.org/inde
     grub-mkconfig -o /boot/grub/grub.cfg
     ```
 
-### systemd-boot
+### systemd-boot {#systemd-boot}
 
 1. 부트로더 설치
 
@@ -261,13 +261,13 @@ intel 또는 AMD CPU 사용자라면 [microcode](https://wiki.archlinux.org/inde
     editor 0
     ```
 
-## GUI 설치
+## GUI 설치 {#gui-설치}
 
 아치 위키를 참조해서 그래픽카드 드라이버 설치. 인텔이면 `mesa`, `xf86-video-intel`을 설치하면 대충 된다.
 
 터치패드가 있다면 `xf86-input-synaptics` 설치
 
-### GNOME
+### GNOME {#gnome}
 
 아주 쉽다.
 
@@ -276,7 +276,7 @@ pacman -S gnome
 systemctl enable gdm.service
 ```
 
-### KDE
+### KDE {#kde}
 
 1. X Server 설치
 
@@ -298,7 +298,7 @@ systemctl enable gdm.service
     systemctl enable sddm.service
     ```
 
-### xfce4
+### xfce4 {#xfce4}
 
 1. X Server 설치
 
@@ -314,9 +314,9 @@ systemctl enable gdm.service
     systemctl enable gdm.service
     ```
 
-## 기타
+## 기타 {#기타}
 
-### linux-lts 설치
+### linux-lts 설치 {#linux-lts-설치}
 
 `linux` 커널이 가끔 불안정할 때가 있어서 `linux-lts`를 선호
 
@@ -356,8 +356,8 @@ systemctl enable gdm.service
           ...
           ```
 
-## 설치 중 문제가 발생했을 때
+## 설치 중 문제가 발생했을 때 {#설치-중-문제가-발생했을-때}
 
-### PGP 키 에러가 날때
+### PGP 키 에러가 날때 {#pgp-키-에러가-날때}
 
 `archlinux-keyring`, `gnome-keyring`을 재설치하고 다시 해보자
