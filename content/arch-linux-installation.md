@@ -1,1 +1,1 @@
-post/arch-linux-installation.md
+post/2018-10-26-arch-linux-installation.md

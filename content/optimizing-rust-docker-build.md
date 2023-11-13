@@ -1,1 +1,1 @@
-post/optimizing-rust-docker-build.md
+post/2019-01-16-optimizing-rust-docker-build.md

@@ -1,1 +1,1 @@
-post/how-to-write-email-with-military-precision.md
+post/2017-10-30-how-to-write-email-with-military-precision.md

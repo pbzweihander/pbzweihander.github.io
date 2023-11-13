@@ -1,1 +1,1 @@
-post/arch-raid0.md
+post/2018-10-26-arch-raid0.md
