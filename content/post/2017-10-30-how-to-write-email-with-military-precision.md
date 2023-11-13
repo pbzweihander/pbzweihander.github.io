@@ -1,6 +1,7 @@
 +++
 title = "군인처럼 메일 작성하기"
 date = 2017-10-30
+taxonomies.tags = ["writing", "email"]
 +++
 
 이 글은 Kabir Sehgal의 [How to Write Email with Military Precision](https://hbr.org/2016/11/how-to-write-email-with-military-precision) 을 보고, 대충 번역하여 작성한 글입니다.

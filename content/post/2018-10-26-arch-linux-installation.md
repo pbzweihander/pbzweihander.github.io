@@ -1,7 +1,8 @@
 +++
 title = "Arch Linux Installation Guide"
 date = 2018-10-26
-extra.toc = true
+taxonomies.tags = ["archlinux"]
+extra.add_toc = true
 +++
 
 > Disclamer:  

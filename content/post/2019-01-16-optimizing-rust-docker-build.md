@@ -1,6 +1,7 @@
 +++
 title = "Rust Docker Build 시간 및 크기 압축하기"
 date = 2019-01-16
+taxonomies.tags = ["rust"]
 +++
 
 > Reference: http://whitfin.io/speeding-up-rust-docker-builds/
