@@ -19,7 +19,8 @@ twitter_card = true
 favicon = "favicon.ico"
 
 header_nav = [
-    { name = "/home/", url = "/" },
-    { name = "/posts/", url = "/post/" },
-    { name = "/tags/", url = "/tags/" },
+    { name = "~home", url = "/" },
+    { name = "/posts", url = "/post/" },
+    { name = "#tags", url = "/tags/" },
+    { name = "=feed", url = "/atom.xml" },
 ]
