@@ -25,10 +25,9 @@ docker라는 가상화 software가 흥하니, CoreOS의 rkt 같은 경쟁자들�
 이 때 docker는 표준화 과정을 딱히 거치지 않았습니다. container image 형식도 docker 자신만의 비표준 형식을 사용하고 있었습니다.
 그에 반해 rkt는 appc (application container)라는 container image 형식을 사용했습니다.
 
-그러나 rkt는 docker와 호환이 되지 않고, docker가 더욱 득세하면서 rkt는 망하게 됩니다.
+이런 상황에서 rkt (CoreOS)와 docker 개발자들은 합심해서 container의 표준을 세우게 되는데, 이것이 OCI (Open Container Initiative) 입니다.
 
-rkt가 망하기 전, rkt 개발자들은 docker 개발자들에게 container라는 기술은 앞으로 발전할 것이므로, 우리 공개된 container 표준을 하나 만들자고 열심히 설득합니다.
-비록 rkt는 망하게 되었지만, 이 공개된 container 표준은 남아서 성공하게 되고, 우리는 이를 OCI (Open Container Initiative) 표준이라고 부릅니다.
+docker와 rkt는 OCI 출범 이후 OCI 표준을 따라 구현하게 됩니다.
 
 ## runc
 
