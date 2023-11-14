@@ -1,0 +1,91 @@
+<!doctype html><html lang=ko_KR><head><meta charset=UTF-8><meta content="IE=edge" http-equiv=X-UA-Compatible><meta content="text/html; charset=UTF-8" http-equiv=content-type><meta content="width=device-width,initial-scale=1" name=viewport><title>Rust Docker Build 시간 및 크기 압축하기</title><meta content="Rust Docker Build 시간 및 크기 압축하기" name=title><meta content="Zola v0.16.1" name=generator><meta content=website property=og:type><meta content=https://pbzweihander.github.io/post/optimizing-rust-docker-build/ property=og:url><meta property=og:site_name><meta content="Rust Docker Build 시간 및 크기 압축하기" property=og:title><meta content=summary_large_image property=twitter:card><meta content=https://pbzweihander.github.io/post/optimizing-rust-docker-build/ property=twitter:url><meta content="Rust Docker Build 시간 및 크기 압축하기" property=twitter:title><link href=https://pbzweihander.github.io/post/optimizing-rust-docker-build/ rel=canonical><script type=application/ld+json>
+            {
+                
+                "url":"https://pbzweihander.github.io/post/optimizing-rust-docker-build/",
+                "@type":"WebSite",
+                "headline":"Rust Docker Build 시간 및 크기 압축하기",
+                "name":"Rust Docker Build 시간 및 크기 압축하기",
+                
+                "@context":"https://schema.org"
+            }
+        </script><link href="https://pbzweihander.github.io/ atom.xml" rel=alternate title=RSS type=application/atom+xml><link href=https://pbzweihander.github.io/style.css rel=stylesheet><body theme=auto><div class=w><header><nav><a href=/>~home</a><a href=/post/>/posts</a><a href=/tags/>#tags</a><a href=/atom.xml>=feed</a></nav><p><a href=..>..</a>/optimizing-rust-docker-build<p class=post-meta><time datetime=2019-01-16>2019-01-16</time><h1 id=_title>Rust Docker Build 시간 및 크기 압축하기</h1></header><main aria-label=Content class=page-content><blockquote><p>Reference: http://whitfin.io/speeding-up-rust-docker-builds/</blockquote><p>Rust로 된 애플리케이션을 Docker Image로 감쌀 때, Rust 빌드의 특성상 빌드 시간이 굉장히 길어지는 문제가 있는데, 이를 줄이고 또한 musl을 통해 이미지 크기 까지 줄이는 법을 알아봅시다.<p>먼저 프로젝트 이름은 <code>project_name</code>으로 가정합니다. 이 부분을 각자의 프로젝트 명으로 바꿔주세요.<h2 id=base-dockerfile><a aria-label=base-dockerfile href=#base-dockerfile>##</a><span> </span>Base Dockerfile</h2><p>기본적으로 Dockerfile을 작성한다면 다음과 같습니다.<pre class=language-Dockerfile data-lang=Dockerfile style=background:#2b303b;color:#c0c5ce><code class=language-Dockerfile data-lang=Dockerfile><span style=color:#b48ead>FROM</span><span> rust:1.31
+</span><span>
+</span><span style=color:#b48ead>COPY</span><span> ./Cargo.toml ./Cargo.toml
+</span><span style=color:#b48ead>COPY</span><span> ./Cargo.lock ./Cargo.lock
+</span><span style=color:#b48ead>COPY</span><span> ./src ./src
+</span><span>
+</span><span style=color:#b48ead>RUN </span><span>cargo build --release
+</span><span>
+</span><span>CMD [ "</span><span style=color:#a3be8c>.target/release/project_name</span><span>" ]
+</span></code></pre><p>그런데 이렇게 하면 매 docker build마다 dependency를 또 다시 받고 처음부터 빌드하면서 시간이 굉장히 오래 걸리게 됩니다. 이를 줄여봅시다.<h2 id=optimizing-build-times><a aria-label=optimizing-build-times href=#optimizing-build-times>##</a><span> </span>Optimizing Build Times</h2><p>Docker에는 docker layer라는 좋은 기능이 있어서, Dockerfile의 한 줄의 실행 결과가 저장됩니다. 그래서 만약 우리가 dependency를 빌드하는 과정을 docker layer로 저장할 수 있다면, 빌드 시간이 빨라지겠죠?<pre class=language-Dockerfile data-lang=Dockerfile style=background:#2b303b;color:#c0c5ce><code class=language-Dockerfile data-lang=Dockerfile><span style=color:#b48ead>FROM</span><span> rust:1.31
+</span><span>
+</span><span style=color:#65737e># 먼저 빈 프로젝트를 생성합니다
+</span><span style=color:#b48ead>RUN </span><span>USER=root cargo new --bin project_name
+</span><span style=color:#b48ead>WORKDIR </span><span>/project_name
+</span><span>
+</span><span style=color:#65737e># manifest 파일들을 복사합니다
+</span><span style=color:#b48ead>COPY</span><span> ./Cargo.lock ./Cargo.lock
+</span><span style=color:#b48ead>COPY</span><span> ./Cargo.toml ./Cargo.toml
+</span><span>
+</span><span style=color:#65737e># 여기서 빈 main.rs 파일을 이용해 한번 빌드함으로써,
+</span><span style=color:#65737e># dependency를 다운받고 한번 빌드하는 과정이 docker layer 상에 저장됩니다
+</span><span style=color:#b48ead>RUN </span><span>cargo build --release
+</span><span style=color:#b48ead>RUN </span><span>rm src/*.rs
+</span><span>
+</span><span style=color:#65737e># 실제 코드들을 복사합니다
+</span><span style=color:#b48ead>COPY</span><span> ./src ./src
+</span><span>
+</span><span style=color:#65737e># 임시로 빌드했던 파일을 삭제하고 다시 빌드합니다
+</span><span style=color:#b48ead>RUN </span><span>rm ./target/release/deps/project_name*
+</span><span style=color:#b48ead>RUN </span><span>cargo build --release
+</span><span>
+</span><span>CMD ["</span><span style=color:#a3be8c>./target/release/project_name</span><span>"]
+</span></code></pre><p>위 방법대로, 한번 빈 <code>main.rs</code> 파일 (실제로는 hello world 코드가 들어있겠죠)로 한번 빌드하면, dependency들을 전부 다운로드하고 컴파일하게 됩니다. 만약 코드만 수정하고 다시 docker image를 빌드한다면 dependency를 다시 빌드하는 과정은 docker layer에 의해 생략되고 바로 수정된 코드만 빌드하게 됩니다.<h2 id=optimizing-build-sizes><a aria-label=optimizing-build-sizes href=#optimizing-build-sizes>##</a><span> </span>Optimizing Build Sizes</h2><h3 id=without-musl><a aria-label=without-musl href=#without-musl>###</a><span> </span>Without musl</h3><p>하지만 이 상태로 docker image를 그대로 배포하기에는 build artifact가 너무 많아 image 사이즈가 너무 커지게 됩니다. Docker에선 이것을 해결하기 위해 multi-stage build를 가능하게 하는데요.<pre class=language-Dockerfile data-lang=Dockerfile style=background:#2b303b;color:#c0c5ce><code class=language-Dockerfile data-lang=Dockerfile><span style=color:#b48ead>FROM</span><span> rust:1.31
+</span><span>
+</span><span style=color:#b48ead>RUN </span><span>USER=root cargo new --bin project_name
+</span><span style=color:#b48ead>WORKDIR </span><span>/project_name
+</span><span>
+</span><span style=color:#b48ead>COPY</span><span> ./Cargo.lock ./Cargo.lock
+</span><span style=color:#b48ead>COPY</span><span> ./Cargo.toml ./Cargo.toml
+</span><span>
+</span><span style=color:#b48ead>RUN </span><span>cargo build --release
+</span><span style=color:#b48ead>RUN </span><span>rm src/*.rs
+</span><span>
+</span><span style=color:#b48ead>COPY</span><span> ./src ./src
+</span><span>
+</span><span style=color:#b48ead>RUN </span><span>rm ./target/release/deps/project_name*
+</span><span style=color:#b48ead>RUN </span><span>cargo build --release
+</span><span>
+</span><span style=color:#65737e># 아무것도 없는 새 rust 이미지에서 시작합니다
+</span><span style=color:#b48ead>FROM</span><span> rust:1.31
+</span><span>
+</span><span style=color:#65737e># 이전 stage에서 빌드 결과만을 가져옵니다
+</span><span style=color:#b48ead>COPY</span><span> --from=</span><span style=color:#bf616a>0</span><span> /project_name/target/release/project_name .
+</span><span>
+</span><span>CMD ["</span><span style=color:#a3be8c>./project_name</span><span>"]
+</span></code></pre><p>이렇게 하면 마지막에 바이너리만을 가지고 이미지를 새로 만들었으니 마지막 이미지의 크기가 아주 작아지게 됩니다. 하지만 여기서 끝이 아닙니다. 왜 아무것도 없는 바이너리만을 들고 있을 건데 base image가 rust여야 할까요? debian이면 더 좋겠죠? 근데 만약 더 줄이고 싶다면?<h3 id=with-musl><a aria-label=with-musl href=#with-musl>###</a><span> </span>With musl</h3><p>Docker에는 <code>scratch</code> 라는 이름의, 정말 아무것도 없는 base image가 있습니다. 근데 여기는 정말 아무런 library도 없기 때문에, 우리 바이너리가 필요한 library들을 직접 설치해줘야 합니다.<p>아니면.. musl을 통해 모든 dependency를 한 binary 안에 통합시켜버리는 방법이 있죠.<pre class=language-Dockerfile data-lang=Dockerfile style=background:#2b303b;color:#c0c5ce><code class=language-Dockerfile data-lang=Dockerfile><span style=color:#65737e># muslrust를 통해 빌드합니다
+</span><span style=color:#b48ead>FROM</span><span> clux/muslrust:1.31.0-stable
+</span><span>
+</span><span style=color:#b48ead>WORKDIR </span><span>/
+</span><span style=color:#b48ead>RUN </span><span>USER=root cargo new --bin project_name
+</span><span style=color:#b48ead>WORKDIR </span><span>/project_name
+</span><span>
+</span><span style=color:#b48ead>COPY</span><span> ./Cargo.lock ./Cargo.lock
+</span><span style=color:#b48ead>COPY</span><span> ./Cargo.toml ./Cargo.toml
+</span><span>
+</span><span style=color:#b48ead>RUN </span><span>cargo build --release
+</span><span style=color:#b48ead>RUN </span><span>rm src/*.rs
+</span><span>
+</span><span style=color:#b48ead>COPY</span><span> ./src ./src
+</span><span>
+</span><span style=color:#65737e># 여기서 target 폴더가 조금 바뀌게 됩니다
+</span><span style=color:#b48ead>RUN </span><span>rm ./target/x86_64-unknown-linux-musl/release/deps/project_name*
+</span><span style=color:#b48ead>RUN </span><span>cargo build --release
+</span><span>
+</span><span style=color:#65737e># 이제 scratch를 base image로 이용할 수 있습니다
+</span><span style=color:#b48ead>FROM</span><span> scratch
+</span><span>
+</span><span style=color:#b48ead>COPY</span><span> --from=</span><span style=color:#bf616a>0</span><span> /project_name/target/x86_64-unknown-linux-musl/release/project_name .
+</span><span>
+</span><span>CMD [ "</span><span style=color:#a3be8c>./project_name</span><span>" ]
+</span></code></pre><p><a href=https://github.com/clux/muslrust rel=noopener target=_blank>clux/muslrust</a>를 이용해 static binary를 만들 수 있습니다. static binary가 무엇인지 musl이 무엇인지는 여기서 자세히 다루지는 않겠습니다. (저도 잘 모르기 때문에..)</main><footer><p class=to-top><a href=#_title>^ Top</a><p class=taxonomies><a href=/tags/rust>#rust</a></footer></div>

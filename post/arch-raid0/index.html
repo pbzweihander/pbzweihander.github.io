@@ -1,0 +1,26 @@
+<!doctype html><html lang=ko_KR><head><meta charset=UTF-8><meta content="IE=edge" http-equiv=X-UA-Compatible><meta content="text/html; charset=UTF-8" http-equiv=content-type><meta content="width=device-width,initial-scale=1" name=viewport><title>Arch with RAID 0</title><meta content="Arch with RAID 0" name=title><meta content="Zola v0.16.1" name=generator><meta content=website property=og:type><meta content=https://pbzweihander.github.io/post/arch-raid0/ property=og:url><meta property=og:site_name><meta content="Arch with RAID 0" property=og:title><meta content=summary_large_image property=twitter:card><meta content=https://pbzweihander.github.io/post/arch-raid0/ property=twitter:url><meta content="Arch with RAID 0" property=twitter:title><link href=https://pbzweihander.github.io/post/arch-raid0/ rel=canonical><script type=application/ld+json>
+            {
+                
+                "url":"https://pbzweihander.github.io/post/arch-raid0/",
+                "@type":"WebSite",
+                "headline":"Arch with RAID 0",
+                "name":"Arch with RAID 0",
+                
+                "@context":"https://schema.org"
+            }
+        </script><link href="https://pbzweihander.github.io/ atom.xml" rel=alternate title=RSS type=application/atom+xml><link href=https://pbzweihander.github.io/style.css rel=stylesheet><body theme=auto><div class=w><header><nav><a href=/>~home</a><a href=/post/>/posts</a><a href=/tags/>#tags</a><a href=/atom.xml>=feed</a></nav><p><a href=..>..</a>/arch-raid0<p class=post-meta><time datetime=2018-10-26>2018-10-26</time><h1 id=_title>Arch with RAID 0</h1></header><main aria-label=Content class=page-content><p>RAID 0로 Arch Linux 설치하기<p>2개의 디스크가 각각 <code>sda</code>, <code>sdb</code> 라고 가정하고,<br> <code>sda1</code> 을 boot, <code>sdb1</code> 을 swap으로 설정, 디스크의 남은 공간 <code>sda2</code>, <code>sdb2</code> 를 RAID 0로 묶는다.<p>자세하게 설명되지 않은 것들은 <a href=/arch-linux-installation/>Arch Linux Installation</a> 참고<ol><li><p>UEFI로 부팅되었는지 체크</p><li><p>Wifi가 필요하다면 연결</p><li><p>시계 업데이트</p><li><p>디스크 파티셔닝</p> <pre class=language-bash data-lang=bash style=background:#2b303b;color:#c0c5ce><code class=language-bash data-lang=bash><span style=color:#bf616a>cgdisk</span><span> /dev/sda
+</span></code></pre> <ul><li>/dev/sda1 : 1GB (넉넉잡아 2GB도 무방할 듯), EFI System (EF00)<li>/dev/sda2 : Linux filesystem (8300, default)</ul> <pre class=language-bash data-lang=bash style=background:#2b303b;color:#c0c5ce><code class=language-bash data-lang=bash><span style=color:#bf616a>cgdisk</span><span> /dev/sdb
+</span></code></pre> <ul><li>/dev/sdb1 : depends on RAM, Linux swap (8200)<li>/dev/sdb2 : Linux filesystem (8300, default)</ul><li><p>RAID 0로 묶기</p> <pre class=language-bash data-lang=bash style=background:#2b303b;color:#c0c5ce><code class=language-bash data-lang=bash><span style=color:#bf616a>modprobe</span><span> raid0
+</span><span style=color:#bf616a>mdadm --create</span><span> /dev/md0</span><span style=color:#bf616a> --level</span><span>=0</span><span style=color:#bf616a> --raid-devices</span><span>=2 /dev/sda2 /dev/sdb2
+</span></code></pre><li><p>파티션 포맷 및 마운트</p> <pre class=language-bash data-lang=bash style=background:#2b303b;color:#c0c5ce><code class=language-bash data-lang=bash><span style=color:#bf616a>mkfs.fat -F32</span><span> /dev/sda1
+</span><span style=color:#bf616a>mkswap</span><span> /dev/sdb1
+</span><span style=color:#bf616a>mkfs.ext4</span><span> /dev/md0
+</span><span>
+</span><span style=color:#bf616a>mount</span><span> /dev/md0 /mnt
+</span><span style=color:#bf616a>mkdir</span><span> /mnt/boot
+</span><span style=color:#bf616a>mount</span><span> /dev/sda1 /mnt/boot
+</span><span style=color:#bf616a>swapon</span><span> /dev/sdb1
+</span></code></pre><li><p>기본 패키지 설치</p><li><p>mdadm 설정</p> <ol><li><p>설정 파일 생성</p> <pre class=language-bash data-lang=bash style=background:#2b303b;color:#c0c5ce><code class=language-bash data-lang=bash><span style=color:#bf616a>mdadm --examine --scan </span><span>> /mnet/etc/dadm.conf
+</span></code></pre><li><p>rc.conf 수정</p> <pre class=language-bash data-lang=bash style=background:#2b303b;color:#c0c5ce><code class=language-bash data-lang=bash><span style=color:#bf616a>nano</span><span> /mnt/etc/rc.conf
+</span></code></pre> <ul><li><code>MODULES</code> : <code>(raid0)</code></ul><li><p>mkinitcpio.conf 수정</p> <pre class=language-bash data-lang=bash style=background:#2b303b;color:#c0c5ce><code class=language-bash data-lang=bash><span style=color:#bf616a>nano</span><span> /mnt/etc/mkinitcpio.conf
+</span></code></pre> <ul><li><code>MODULES</code> : <code>(dm_mod)</code><li><code>HOOKS</code> : <code>filesystems</code> 앞에 <code>mdadm</code> 추가 <ul><li>예: <code>HOOKS=(base udev autodetect modconf block mdadm filesystems keyboard fsck)</code></ul></ul></ol><li><p>fstab 파일 생성</p><li><p>설치한 리눅스로 chroot</p></ol><p>이후는 <a href=/arch-linux-installation/>Arch Linux Installation</a>를 따르면 된다.</main><footer><p class=to-top><a href=#_title>^ Top</a><p class=taxonomies><a href=/tags/archlinux>#archlinux</a></footer></div>

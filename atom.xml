@@ -1,0 +1,742 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="ko_KR">
+    <title></title>
+    <link href="https://pbzweihander.github.io/atom.xml" rel="self" type="application/atom+xml"/>
+    <link href="https://pbzweihander.github.io"/>
+    <generator uri="https://www.getzola.org/">Zola</generator>
+    <updated>2023-11-14T00:00:00+00:00</updated>
+    <id>https://pbzweihander.github.io/atom.xml</id>
+    <entry xml:lang="ko_KR">
+        <title>docker? containerd? runc? 이게 다 뭐지? podman은 또 뭐고?</title>
+        <published>2023-11-14T00:00:00+00:00</published>
+        <updated>2023-11-14T00:00:00+00:00</updated>
+        <author>
+          <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://pbzweihander.github.io/post/docker-containerd-runc-etc/" type="text/html"/>
+        <id>https://pbzweihander.github.io/post/docker-containerd-runc-etc/</id>
+        
+        <content type="html">&lt;blockquote&gt;
+&lt;p&gt;이 글은 제 개인 Discord server에서 &lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;hyeon.me&quot;&gt;김지현 (simnalamburt)&lt;&#x2F;a&gt; 님이 설명해주신 내용을 정리한 것입니다.&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;p&gt;Linux container의 세계를 여행하다보면, 여러가지 software들이 등장합니다.
+docker, containerd, runc, podman, CRI-O, nerdctl, ctr, crictl, ...
+이 많은 software들은 다 어떤 차이와 쓰임새가 있고, 왜 등장하게 된 걸까요?
+container와 관련된 여러 software들을 나열하고 살펴봅시다.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;docker&quot;&gt;&lt;a href=&quot;#docker&quot; aria-label=&quot;docker&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;docker&lt;&#x2F;h2&gt;
+&lt;p&gt;태초에는 docker가 있었습니다.
+docker는 software로써 성공하기 위해 편의성 기능도 많이 넣고, 처음에는 가상화였다가 lxc로 바꿨다가 cgroup으로 바꾸는 등의 일도 전부 docker라는 한 이름 아래에서 일어났습니다.
+LXC의 등장 이전까지의 역사와 docker에 대한 자세한 설명은 이 글에서 생략합니다.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;oci-open-container-initiative&quot;&gt;&lt;a href=&quot;#oci-open-container-initiative&quot; aria-label=&quot;oci-open-container-initiative&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;OCI (Open Container Initiative)&lt;&#x2F;h2&gt;
+&lt;p&gt;docker라는 가상화 software가 흥하니, CoreOS의 rkt 같은 경쟁자들도 생겨납니다.&lt;&#x2F;p&gt;
+&lt;p&gt;이 때 docker는 표준화 과정을 딱히 거치지 않았습니다. container image 형식도 docker 자신만의 비표준 형식을 사용하고 있었습니다.
+그에 반해 rkt는 appc (application container)라는 container image 형식을 사용했습니다.&lt;&#x2F;p&gt;
+&lt;p&gt;이런 상황에서 rkt (CoreOS)와 docker 개발자들은 합심해서 container의 표준을 세우게 되는데, 이것이 OCI (Open Container Initiative) 입니다.&lt;&#x2F;p&gt;
+&lt;p&gt;docker와 rkt는 OCI 출범 이후 OCI 표준을 따라 구현하게 됩니다.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;runc&quot;&gt;&lt;a href=&quot;#runc&quot; aria-label=&quot;runc&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;runc&lt;&#x2F;h2&gt;
+&lt;p&gt;docker가 OCI를 구현할 당시, docker의 codebase가 너무 크고 복잡해져서 OCI를 구현하는 부분을 독립 project로 찢어내자는 의견이 득세하고 실행되게 됩니다.
+그래서 OCI 표준을 구현하고, 실제로 container를 실행하는 부분이 runc라는 이름으로 찢어지게 됩니다.&lt;&#x2F;p&gt;
+&lt;p&gt;우리가 container의 구조에 대해 deep dive할 때 배우는 cgroup과 소통하는 등의 일은 전부 실제로는 runc가 하게 됩니다.&lt;&#x2F;p&gt;
+&lt;p&gt;docker와, 이후 나올 CRI-O, podman 등 대부분의 container runtime이 실제로 container를 실행하는 데에는 runc를 사용합니다.
+container를 실행할 때 마다 runc를 하나씩 새로 켜는 방식입니다.&lt;&#x2F;p&gt;
+&lt;p&gt;crun이라는 minor한 OCI 구현체도 있지만 거의 사용되지 않습니다.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;cri-container-runtime-interface&quot;&gt;&lt;a href=&quot;#cri-container-runtime-interface&quot; aria-label=&quot;cri-container-runtime-interface&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;CRI (Container Runtime Interface)&lt;&#x2F;h2&gt;
+&lt;p&gt;Kubernetes는 원래 container를 실행하는 부분으로 docker를 쓰도록 hard-coding 되어있다가, rkt가 등장하면서 docker과 rkt를 고를 수 있게 했다가, rkt가 망하고 다른 구현체가 등장하면서 이번에는 hard-code하지 말고 docker 등의 container runtime을 interface로 추상화하자고 생각하게 됩니다.
+이것이 바로 CRI (Container Runtime Interface) 입니다.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;cri-o&quot;&gt;&lt;a href=&quot;#cri-o&quot; aria-label=&quot;cri-o&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;CRI-O&lt;&#x2F;h2&gt;
+&lt;p&gt;docker는 docker-compose, docker-swarm 등이 포함되고 편의성을 위해 이것저것 집어넣은 거대한 software입니다.
+OCI와 runc가 등장한 이후 runc만 감싼 lightweight한 새 container manager를 만들 수 있겠다고 생각되어, 이런 software가 여럿 등장했는데 그 중 하나가 CRI-O 입니다.&lt;&#x2F;p&gt;
+&lt;p&gt;Kubernetes의 경우 container의 관리는 실제로는 Kubernetes가 하고, CRI 구현체는 container를 적당히 켜고 끄는 일만 하면 됩니다.
+여기에 docker는 너무 거대한 software입니다.
+그래서 runc를 이용해 CRI 표준만 구현한 아주 가벼운 software가 CRI-O 입니다.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;containerd&quot;&gt;&lt;a href=&quot;#containerd&quot; aria-label=&quot;containerd&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;containerd&lt;&#x2F;h2&gt;
+&lt;p&gt;어차피 docker 개발자나 Kubernetes 개발자나 다 겹치는 상황 아래에서 Kubernetes에서 CRI 논의를 할 때, Kubernetes의 hard-coded docker를 제거할 때 docker도 CRI로 가져다 쓸 수 있으면 좋겠다고 생각하게 됩니다.&lt;&#x2F;p&gt;
+&lt;p&gt;docker 개발자들은 docker 위에 CRI를 구현하느니, OCI 표준을 구현할 때 runc를 찢어낸 것 처럼, docker 안에 CRI 표준에 해당하는 작은 부분을 찢어내자고 생각하게 됩니다.
+이것이 실행된 것이 containerd입니다.&lt;&#x2F;p&gt;
+&lt;p&gt;원래는 docker가 runc를 직접 실행하는 구조였는데, docker daemon과 containerd daemon이 같이 실행되고, docker가 containerd에 명령을 내리면 containerd가 runc를 실행하는 구조로 바뀝니다.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;ctr&quot;&gt;&lt;a href=&quot;#ctr&quot; aria-label=&quot;ctr&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;ctr&lt;&#x2F;h2&gt;
+&lt;p&gt;ctr은 containerd용 CLI입니다.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;crictl&quot;&gt;&lt;a href=&quot;#crictl&quot; aria-label=&quot;crictl&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;crictl&lt;&#x2F;h2&gt;
+&lt;p&gt;crictl은 CRI interface를 구현하는 containerd, CRI-O 등을 조작하는 CLI입니다.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;nerdctl&quot;&gt;&lt;a href=&quot;#nerdctl&quot; aria-label=&quot;nerdctl&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;nerdctl&lt;&#x2F;h2&gt;
+&lt;p&gt;ctr과 crictl은 사람이 쓰기에 많이 불편하고, 실제로 사람이 쓰는 것을 가정하고 만들어진 것도 아닙니다.
+그래서 등장한 것이 nerdctl입니다.&lt;&#x2F;p&gt;
+&lt;p&gt;nerdctl은 containerd 용 CLI인데, docker와 UX를 비슷하게 만들어서 사용하기 편합니다.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;podman&quot;&gt;&lt;a href=&quot;#podman&quot; aria-label=&quot;podman&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;podman&lt;&#x2F;h2&gt;
+&lt;p&gt;비록 rkt는 망했지만, rkt도 여러 장점이 있었습니다.
+rkt는 docker와는 다르게 daemon이 계속 떠있을 필요도 없고, sudo 권한 없이 rootless로 container를 실행하는 것도 가능했습니다.&lt;&#x2F;p&gt;
+&lt;p&gt;rkt를 그리워하던 사람들이, 시대가 좋아져 OCI, CRI 등의 표준도 잘 잡혔으니, 다시 docker와 완전히 호환되고 daemon 없이 실행가능하면서 rootless container도 지원하는 runtime을 만들어보자고 한 것이 podman입니다.&lt;&#x2F;p&gt;
+&lt;p&gt;podman도 위에서 설명한 것 처럼 내부적으로는 결국 runc를 사용합니다.&lt;&#x2F;p&gt;
+&lt;p&gt;또한 podman은 CRI도 구현합니다.&lt;&#x2F;p&gt;
+&lt;p&gt;그래서 podman은 docker와 CLI UX가 비슷하다는 점에서 docker와 같은 수준이지만, CRI 구현체라는 점에서 containerd, CRI-O와 같은 수준이기도 합니다.&lt;&#x2F;p&gt;
+&lt;p&gt;docker는 container image를 관리하는 부분은 &lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;containers&#x2F;image&quot;&gt;containers&#x2F;image&lt;&#x2F;a&gt;로, filesystem mount 관련 부분은 &lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;containers&#x2F;storage&quot;&gt;containers&#x2F;storage&lt;&#x2F;a&gt;로 찢어졌는데, podman은 이 둘을 그대로 사용합니다.
+그래서 docker와 podman은 사실 많은 양의 codebase를 공유합니다.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;libpod&quot;&gt;&lt;a href=&quot;#libpod&quot; aria-label=&quot;libpod&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;libpod&lt;&#x2F;h2&gt;
+&lt;p&gt;podman 내부에서 runc를 실행하는 부분을 libpod이라는 이름으로 찢는 시도가 현재 진행 중입니다.
+별도로 program을 설치하는 것이 아니라 Go library 함수를 호출하면 container가 올라가고 내려가는 등을 할 수 있게 하는 것이 목표입니다.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;youki&quot;&gt;&lt;a href=&quot;#youki&quot; aria-label=&quot;youki&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;&lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;containers&#x2F;youki&quot;&gt;youki&lt;&#x2F;a&gt;&lt;&#x2F;h2&gt;
+&lt;p&gt;youki는 Rust로 짜여진 OCI runtime 표준 구현체로, runc와 crun과 같은 수준에 있는 software입니다.&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="ko_KR">
+        <title>Rust Docker Build 시간 및 크기 압축하기</title>
+        <published>2019-01-16T00:00:00+00:00</published>
+        <updated>2019-01-16T00:00:00+00:00</updated>
+        <author>
+          <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://pbzweihander.github.io/post/optimizing-rust-docker-build/" type="text/html"/>
+        <id>https://pbzweihander.github.io/post/optimizing-rust-docker-build/</id>
+        
+        <content type="html">&lt;blockquote&gt;
+&lt;p&gt;Reference: http:&#x2F;&#x2F;whitfin.io&#x2F;speeding-up-rust-docker-builds&#x2F;&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;p&gt;Rust로 된 애플리케이션을 Docker Image로 감쌀 때, Rust 빌드의 특성상 빌드 시간이 굉장히 길어지는 문제가 있는데, 이를 줄이고 또한 musl을 통해 이미지 크기 까지 줄이는 법을 알아봅시다.&lt;&#x2F;p&gt;
+&lt;p&gt;먼저 프로젝트 이름은 &lt;code&gt;project_name&lt;&#x2F;code&gt;으로 가정합니다. 이 부분을 각자의 프로젝트 명으로 바꿔주세요.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;base-dockerfile&quot;&gt;&lt;a href=&quot;#base-dockerfile&quot; aria-label=&quot;base-dockerfile&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;Base Dockerfile&lt;&#x2F;h2&gt;
+&lt;p&gt;기본적으로 Dockerfile을 작성한다면 다음과 같습니다.&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;Dockerfile&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-Dockerfile &quot;&gt;&lt;code class=&quot;language-Dockerfile&quot; data-lang=&quot;Dockerfile&quot;&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; rust:1.31
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;COPY&lt;&#x2F;span&gt;&lt;span&gt; .&#x2F;Cargo.toml .&#x2F;Cargo.toml
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;COPY&lt;&#x2F;span&gt;&lt;span&gt; .&#x2F;Cargo.lock .&#x2F;Cargo.lock
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;COPY&lt;&#x2F;span&gt;&lt;span&gt; .&#x2F;src .&#x2F;src
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;RUN &lt;&#x2F;span&gt;&lt;span&gt;cargo build --release
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;CMD [ &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;.target&#x2F;release&#x2F;project_name&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot; ]
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;그런데 이렇게 하면 매 docker build마다 dependency를 또 다시 받고 처음부터 빌드하면서 시간이 굉장히 오래 걸리게 됩니다. 이를 줄여봅시다.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;optimizing-build-times&quot;&gt;&lt;a href=&quot;#optimizing-build-times&quot; aria-label=&quot;optimizing-build-times&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;Optimizing Build Times&lt;&#x2F;h2&gt;
+&lt;p&gt;Docker에는 docker layer라는 좋은 기능이 있어서, Dockerfile의 한 줄의 실행 결과가 저장됩니다.
+그래서 만약 우리가 dependency를 빌드하는 과정을 docker layer로 저장할 수 있다면, 빌드 시간이 빨라지겠죠?&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;Dockerfile&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-Dockerfile &quot;&gt;&lt;code class=&quot;language-Dockerfile&quot; data-lang=&quot;Dockerfile&quot;&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; rust:1.31
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#65737e;&quot;&gt;# 먼저 빈 프로젝트를 생성합니다
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;RUN &lt;&#x2F;span&gt;&lt;span&gt;USER=root cargo new --bin project_name
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;WORKDIR &lt;&#x2F;span&gt;&lt;span&gt;&#x2F;project_name
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#65737e;&quot;&gt;# manifest 파일들을 복사합니다
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;COPY&lt;&#x2F;span&gt;&lt;span&gt; .&#x2F;Cargo.lock .&#x2F;Cargo.lock
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;COPY&lt;&#x2F;span&gt;&lt;span&gt; .&#x2F;Cargo.toml .&#x2F;Cargo.toml
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#65737e;&quot;&gt;# 여기서 빈 main.rs 파일을 이용해 한번 빌드함으로써,
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#65737e;&quot;&gt;# dependency를 다운받고 한번 빌드하는 과정이 docker layer 상에 저장됩니다
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;RUN &lt;&#x2F;span&gt;&lt;span&gt;cargo build --release
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;RUN &lt;&#x2F;span&gt;&lt;span&gt;rm src&#x2F;*.rs
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#65737e;&quot;&gt;# 실제 코드들을 복사합니다
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;COPY&lt;&#x2F;span&gt;&lt;span&gt; .&#x2F;src .&#x2F;src
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#65737e;&quot;&gt;# 임시로 빌드했던 파일을 삭제하고 다시 빌드합니다
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;RUN &lt;&#x2F;span&gt;&lt;span&gt;rm .&#x2F;target&#x2F;release&#x2F;deps&#x2F;project_name*
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;RUN &lt;&#x2F;span&gt;&lt;span&gt;cargo build --release
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;CMD [&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;.&#x2F;target&#x2F;release&#x2F;project_name&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot;]
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;위 방법대로, 한번 빈 &lt;code&gt;main.rs&lt;&#x2F;code&gt; 파일 (실제로는 hello world 코드가 들어있겠죠)로 한번 빌드하면,
+dependency들을 전부 다운로드하고 컴파일하게 됩니다.
+만약 코드만 수정하고 다시 docker image를 빌드한다면 dependency를 다시 빌드하는 과정은 docker layer에 의해
+생략되고 바로 수정된 코드만 빌드하게 됩니다.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;optimizing-build-sizes&quot;&gt;&lt;a href=&quot;#optimizing-build-sizes&quot; aria-label=&quot;optimizing-build-sizes&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;Optimizing Build Sizes&lt;&#x2F;h2&gt;
+&lt;h3 id=&quot;without-musl&quot;&gt;&lt;a href=&quot;#without-musl&quot; aria-label=&quot;without-musl&quot;&gt;###&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;Without musl&lt;&#x2F;h3&gt;
+&lt;p&gt;하지만 이 상태로 docker image를 그대로 배포하기에는 build artifact가 너무 많아 image 사이즈가 너무 커지게 됩니다.
+Docker에선 이것을 해결하기 위해 multi-stage build를 가능하게 하는데요.&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;Dockerfile&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-Dockerfile &quot;&gt;&lt;code class=&quot;language-Dockerfile&quot; data-lang=&quot;Dockerfile&quot;&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; rust:1.31
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;RUN &lt;&#x2F;span&gt;&lt;span&gt;USER=root cargo new --bin project_name
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;WORKDIR &lt;&#x2F;span&gt;&lt;span&gt;&#x2F;project_name
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;COPY&lt;&#x2F;span&gt;&lt;span&gt; .&#x2F;Cargo.lock .&#x2F;Cargo.lock
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;COPY&lt;&#x2F;span&gt;&lt;span&gt; .&#x2F;Cargo.toml .&#x2F;Cargo.toml
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;RUN &lt;&#x2F;span&gt;&lt;span&gt;cargo build --release
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;RUN &lt;&#x2F;span&gt;&lt;span&gt;rm src&#x2F;*.rs
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;COPY&lt;&#x2F;span&gt;&lt;span&gt; .&#x2F;src .&#x2F;src
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;RUN &lt;&#x2F;span&gt;&lt;span&gt;rm .&#x2F;target&#x2F;release&#x2F;deps&#x2F;project_name*
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;RUN &lt;&#x2F;span&gt;&lt;span&gt;cargo build --release
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#65737e;&quot;&gt;# 아무것도 없는 새 rust 이미지에서 시작합니다
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; rust:1.31
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#65737e;&quot;&gt;# 이전 stage에서 빌드 결과만을 가져옵니다
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;COPY&lt;&#x2F;span&gt;&lt;span&gt; --from=&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;0&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;project_name&#x2F;target&#x2F;release&#x2F;project_name .
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;CMD [&amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;.&#x2F;project_name&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot;]
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;이렇게 하면 마지막에 바이너리만을 가지고 이미지를 새로 만들었으니 마지막 이미지의 크기가 아주 작아지게 됩니다.
+하지만 여기서 끝이 아닙니다. 왜 아무것도 없는 바이너리만을 들고 있을 건데 base image가 rust여야 할까요?
+debian이면 더 좋겠죠? 근데 만약 더 줄이고 싶다면?&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;with-musl&quot;&gt;&lt;a href=&quot;#with-musl&quot; aria-label=&quot;with-musl&quot;&gt;###&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;With musl&lt;&#x2F;h3&gt;
+&lt;p&gt;Docker에는 &lt;code&gt;scratch&lt;&#x2F;code&gt; 라는 이름의, 정말 아무것도 없는 base image가 있습니다.
+근데 여기는 정말 아무런 library도 없기 때문에, 우리 바이너리가 필요한 library들을 직접 설치해줘야 합니다.&lt;&#x2F;p&gt;
+&lt;p&gt;아니면.. musl을 통해 모든 dependency를 한 binary 안에 통합시켜버리는 방법이 있죠.&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;Dockerfile&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-Dockerfile &quot;&gt;&lt;code class=&quot;language-Dockerfile&quot; data-lang=&quot;Dockerfile&quot;&gt;&lt;span style=&quot;color:#65737e;&quot;&gt;# muslrust를 통해 빌드합니다
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; clux&#x2F;muslrust:1.31.0-stable
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;WORKDIR &lt;&#x2F;span&gt;&lt;span&gt;&#x2F;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;RUN &lt;&#x2F;span&gt;&lt;span&gt;USER=root cargo new --bin project_name
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;WORKDIR &lt;&#x2F;span&gt;&lt;span&gt;&#x2F;project_name
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;COPY&lt;&#x2F;span&gt;&lt;span&gt; .&#x2F;Cargo.lock .&#x2F;Cargo.lock
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;COPY&lt;&#x2F;span&gt;&lt;span&gt; .&#x2F;Cargo.toml .&#x2F;Cargo.toml
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;RUN &lt;&#x2F;span&gt;&lt;span&gt;cargo build --release
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;RUN &lt;&#x2F;span&gt;&lt;span&gt;rm src&#x2F;*.rs
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;COPY&lt;&#x2F;span&gt;&lt;span&gt; .&#x2F;src .&#x2F;src
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#65737e;&quot;&gt;# 여기서 target 폴더가 조금 바뀌게 됩니다
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;RUN &lt;&#x2F;span&gt;&lt;span&gt;rm .&#x2F;target&#x2F;x86_64-unknown-linux-musl&#x2F;release&#x2F;deps&#x2F;project_name*
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;RUN &lt;&#x2F;span&gt;&lt;span&gt;cargo build --release
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#65737e;&quot;&gt;# 이제 scratch를 base image로 이용할 수 있습니다
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; scratch
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#b48ead;&quot;&gt;COPY&lt;&#x2F;span&gt;&lt;span&gt; --from=&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;0&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;project_name&#x2F;target&#x2F;x86_64-unknown-linux-musl&#x2F;release&#x2F;project_name .
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;CMD [ &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#a3be8c;&quot;&gt;.&#x2F;project_name&lt;&#x2F;span&gt;&lt;span&gt;&amp;quot; ]
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;&lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;clux&#x2F;muslrust&quot;&gt;clux&#x2F;muslrust&lt;&#x2F;a&gt;를 이용해 static binary를 만들 수 있습니다.
+static binary가 무엇인지 musl이 무엇인지는 여기서 자세히 다루지는 않겠습니다. (저도 잘 모르기 때문에..)&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="ko_KR">
+        <title>Arch Linux Installation Guide</title>
+        <published>2018-10-26T00:00:00+00:00</published>
+        <updated>2018-10-26T00:00:00+00:00</updated>
+        <author>
+          <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://pbzweihander.github.io/post/arch-linux-installation/" type="text/html"/>
+        <id>https://pbzweihander.github.io/post/arch-linux-installation/</id>
+        
+        <content type="html">&lt;blockquote&gt;
+&lt;p&gt;Disclamer:&lt;br &#x2F;&gt;
+This guide is for personal use, written in Korean, and not guaranteed for complete and successful installation.&lt;br &#x2F;&gt;
+Please refer to &lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;wiki.archlinux.org&#x2F;index.php&#x2F;Installation_guide&quot;&gt;arch linux wiki&lt;&#x2F;a&gt; for actual guide.&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;h2 id=&quot;설치-전-할-일&quot;&gt;&lt;a href=&quot;#설치-전-할-일&quot; aria-label=&quot;설치-전-할-일&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;설치 전 할 일&lt;&#x2F;h2&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;UEFI로 부팅되었는지 체크&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;ls&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;sys&#x2F;firmware&#x2F;efi&#x2F;efivars
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;ul&gt;
+&lt;li&gt;폴더가 존재한다면 UEFI로 부팅 성공&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;Wifi가 필요하다면 연결&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;wifi-menu
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ping google.com&lt;&#x2F;code&gt; 으로 연결 확인&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;시계 업데이트&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;timedatectl&lt;&#x2F;span&gt;&lt;span&gt; set-ntp true
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;디스크 파티셔닝 및 포맷&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;파티셔닝&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;cgdisk&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;dev&#x2F;sda
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;ul&gt;
+&lt;li&gt;&#x2F;dev&#x2F;sda1: boot 파티션, 1GB, EFI System (EF00)&lt;&#x2F;li&gt;
+&lt;li&gt;&#x2F;dev&#x2F;sda2: swap 파티션, RAM 크기보다 조금 크게, Linux swap (8200)&lt;&#x2F;li&gt;
+&lt;li&gt;&#x2F;dev&#x2F;sda3: root 파티션, Linux filesystem (8300)&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;포맷&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;mkfs.fat -F32&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;dev&#x2F;sda1
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;mkswap&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;dev&#x2F;sda2
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;mkfs.ext4&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;dev&#x2F;sda3
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;스왑 활성화&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;swapon&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;dev&#x2F;sda2
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;디스크 마운트&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;mount&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;dev&#x2F;sda3 &#x2F;mnt
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;mkdir&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;mnt&#x2F;boot
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;mount&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;dev&#x2F;sda1 &#x2F;mnt&#x2F;boot
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;h2 id=&quot;설치&quot;&gt;&lt;a href=&quot;#설치&quot; aria-label=&quot;설치&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;설치&lt;&#x2F;h2&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;&#x2F;etc&#x2F;pacman.d&#x2F;mirrorlist&lt;&#x2F;code&gt;에서 pacman 한국 미러 추가&lt;&#x2F;p&gt;
+&lt;pre style=&quot;background-color:#2b303b;color:#c0c5ce;&quot;&gt;&lt;code&gt;&lt;span&gt;Server = https:&#x2F;&#x2F;ftp.lanet.kr&#x2F;pub&#x2F;archlinux&#x2F;$repo&#x2F;os&#x2F;$arch
+&lt;&#x2F;span&gt;&lt;span&gt;Server = http:&#x2F;&#x2F;ftp.lanet.kr&#x2F;pub&#x2F;archlinux&#x2F;$repo&#x2F;os&#x2F;$arch
+&lt;&#x2F;span&gt;&lt;span&gt;Server = http:&#x2F;&#x2F;mirror.premi.st&#x2F;archlinux&#x2F;$repo&#x2F;os&#x2F;$arch
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;ul&gt;
+&lt;li&gt;가끔 미러의 상태가 변할 때가 있으니 &lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;www.archlinux.org&#x2F;mirrors&#x2F;status&#x2F;&quot;&gt;Arch Linux Mirror Status&lt;&#x2F;a&gt; 참고해서 추가하자&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;기본 패키지 설치&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;pacstrap&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;mnt base base-devel
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;h2 id=&quot;시스템-기본-설정&quot;&gt;&lt;a href=&quot;#시스템-기본-설정&quot; aria-label=&quot;시스템-기본-설정&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;시스템 기본 설정&lt;&#x2F;h2&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;fstab 파일 생성&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;genfstab -U&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;mnt &amp;gt;&amp;gt; &#x2F;mnt&#x2F;etc&#x2F;fstab
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;설치한 리눅스로 chroot&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;arch-chroot&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;mnt
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;타임존 설정&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;ln -sf&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;usr&#x2F;share&#x2F;zoneinfo&#x2F;Asia&#x2F;Seoul &#x2F;etc&#x2F;localtime
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;hwclock --systohc --utc
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;로케일 생성&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;&#x2F;etc&#x2F;locale.gen&lt;&#x2F;code&gt;에서 로케일을 uncomment&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;en_US.UTF-8 UTF-8&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;code&gt;ko_KR.UTF-8 UTF-8&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;locale-gen&lt;&#x2F;code&gt;으로 로케일 생성&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;사용할 로케일을 &lt;code&gt;&#x2F;etc&#x2F;locale.conf&lt;&#x2F;code&gt;에 추가&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;echo&lt;&#x2F;span&gt;&lt;span&gt; LANG=en_US.UTF-8 &amp;gt; &#x2F;etc&#x2F;locale.conf
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;네트워크 설정&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;&#x2F;etc&#x2F;hostname&lt;&#x2F;code&gt;에서 호스트네임 설정&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;&#x2F;etc&#x2F;hosts&lt;&#x2F;code&gt;에서 설정한 호스트네임 추가&lt;&#x2F;p&gt;
+&lt;pre style=&quot;background-color:#2b303b;color:#c0c5ce;&quot;&gt;&lt;code&gt;&lt;span&gt;127.0.0.1	localhost
+&lt;&#x2F;span&gt;&lt;span&gt;::1		localhost
+&lt;&#x2F;span&gt;&lt;span&gt;127.0.1.1	HOSTNAME.localdomain	HOSTNAME
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href=&quot;https:&#x2F;&#x2F;pbzweihander.github.io&#x2F;post&#x2F;arch-linux-installation&#x2F;#%EB%84%A4%ED%8A%B8%EC%9B%8C%ED%81%AC-%EC%84%A4%EC%A0%95&quot;&gt;네트워크 설정&lt;&#x2F;a&gt; 참고&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;유저 생성&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;새 유저 생성&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;useradd -m -G&lt;&#x2F;span&gt;&lt;span&gt; sudo&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt; -s&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;bin&#x2F;bash USERNAME
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;passwd&lt;&#x2F;span&gt;&lt;span&gt; USERNAME
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;EDITOR=nano visudo&lt;&#x2F;code&gt; 후 &lt;code&gt;%sudo ALL=(ALL) ALL&lt;&#x2F;code&gt;를 uncomment&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;root 잠그기&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;passwd&lt;&#x2F;span&gt;&lt;span&gt; root&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt; -dl
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;부트로더 설치&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https:&#x2F;&#x2F;pbzweihander.github.io&#x2F;post&#x2F;arch-linux-installation&#x2F;#%EB%B6%80%ED%8A%B8%EB%A1%9C%EB%8D%94-%EC%84%A4%EC%B9%98&quot;&gt;부트로더 설치&lt;&#x2F;a&gt; 참고&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;GUI 설치&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https:&#x2F;&#x2F;pbzweihander.github.io&#x2F;post&#x2F;arch-linux-installation&#x2F;#GUI-%EC%84%A4%EC%B9%98&quot;&gt;GUI 설치&lt;&#x2F;a&gt; 참고&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;h2 id=&quot;재부팅&quot;&gt;&lt;a href=&quot;#재부팅&quot; aria-label=&quot;재부팅&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;재부팅&lt;&#x2F;h2&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#96b5b4;&quot;&gt;exit
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;umount -R&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;mnt&#x2F;boot
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;umount -R&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;mnt
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;reboot
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;hr &#x2F;&gt;
+&lt;h2 id=&quot;네트워크-설정&quot;&gt;&lt;a href=&quot;#네트워크-설정&quot; aria-label=&quot;네트워크-설정&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;네트워크 설정&lt;&#x2F;h2&gt;
+&lt;p&gt;&lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;wiki.archlinux.org&#x2F;index.php&#x2F;Network_configuration&quot;&gt;Arch Wiki&#x2F;Network Configuration&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;DHCP를 세팅하거나, NetworkManager를 설치하면 된다.&lt;&#x2F;p&gt;
+&lt;p&gt;GUI 환경을 세팅할거면 얌전히 NetworkManager를 설치하자.&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;networkmanager&quot;&gt;&lt;a href=&quot;#networkmanager&quot; aria-label=&quot;networkmanager&quot;&gt;###&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;NetworkManager&lt;&#x2F;h3&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;pacman -S&lt;&#x2F;span&gt;&lt;span&gt; networkmanager
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;systemctl&lt;&#x2F;span&gt;&lt;span&gt; enable NetworkManager.service
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;시스템 트레이가 필요하면 &lt;code&gt;network-manager-applet&lt;&#x2F;code&gt; 설치&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;무선-네트워크&quot;&gt;&lt;a href=&quot;#무선-네트워크&quot; aria-label=&quot;무선-네트워크&quot;&gt;###&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;무선 네트워크&lt;&#x2F;h3&gt;
+&lt;p&gt;&lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;wiki.archlinux.org&#x2F;index.php&#x2F;Wireless_network_configuration&quot;&gt;Arch Wiki&#x2F;Wireless Network Configuration&lt;&#x2F;a&gt; 참조&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;code&gt;iw&lt;&#x2F;code&gt;, &lt;code&gt;wpa_supplicant&lt;&#x2F;code&gt;, &lt;code&gt;gnome-keyring&lt;&#x2F;code&gt;을 설치하면 대충 된다&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;부트로더-설치&quot;&gt;&lt;a href=&quot;#부트로더-설치&quot; aria-label=&quot;부트로더-설치&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;부트로더 설치&lt;&#x2F;h2&gt;
+&lt;p&gt;&lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;wiki.archlinux.org&#x2F;index.php&#x2F;Category:Boot_loaders&quot;&gt;Arch Wiki&#x2F;Category:Boot Loaders&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;intel 또는 AMD CPU 사용자라면 &lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;wiki.archlinux.org&#x2F;index.php&#x2F;Microcode&quot;&gt;microcode&lt;&#x2F;a&gt;를 설치해야한다.&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;intel이라면 &lt;code&gt;intel-ucode&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;AMD라면 &lt;code&gt;amd-ucode&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;h3 id=&quot;GRUB&quot;&gt;&lt;a href=&quot;#GRUB&quot; aria-label=&quot;GRUB&quot;&gt;###&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;GRUB&lt;&#x2F;h3&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;grub&lt;&#x2F;code&gt;과 &lt;code&gt;efibootmgr&lt;&#x2F;code&gt; 설치&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;부트로더 설치&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;grub-install --target&lt;&#x2F;span&gt;&lt;span&gt;=x86_64-efi&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt; --efi-directory&lt;&#x2F;span&gt;&lt;span&gt;=&#x2F;boot&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt; --bootloader-id&lt;&#x2F;span&gt;&lt;span&gt;=grub&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt; --recheck
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;&#x2F;etc&#x2F;default&#x2F;grub&lt;&#x2F;code&gt;에서 설정&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;GRUB_TIMEOUT&lt;&#x2F;code&gt; : &lt;code&gt;1&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;설정파일 생성&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;grub-mkconfig -o&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;boot&#x2F;grub&#x2F;grub.cfg
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;h3 id=&quot;systemd-boot&quot;&gt;&lt;a href=&quot;#systemd-boot&quot; aria-label=&quot;systemd-boot&quot;&gt;###&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;systemd-boot&lt;&#x2F;h3&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;부트로더 설치&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;bootctl --path&lt;&#x2F;span&gt;&lt;span&gt;=&#x2F;boot install
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;root 파티션의 PARTUUID를 확인&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;blkid -s&lt;&#x2F;span&gt;&lt;span&gt; PARTUUID&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt; -o&lt;&#x2F;span&gt;&lt;span&gt; value &#x2F;dev&#x2F;sda3
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;ul&gt;
+&lt;li&gt;위 줄을 실행하면 root 파티션의 PARTUUID가 출력된다&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;&#x2F;boot&#x2F;loader&#x2F;entries&#x2F;arch.conf&lt;&#x2F;code&gt; 파일을 생성&lt;&#x2F;p&gt;
+&lt;pre style=&quot;background-color:#2b303b;color:#c0c5ce;&quot;&gt;&lt;code&gt;&lt;span&gt;title Arch Linux
+&lt;&#x2F;span&gt;&lt;span&gt;linux &#x2F;vmlinuz-linux
+&lt;&#x2F;span&gt;&lt;span&gt;initrd &#x2F;initramfs-linux.img
+&lt;&#x2F;span&gt;&lt;span&gt;options root=PARTUUID=(아까 읽은 PARTUUID) rw
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;blockquote&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;blkid -s&lt;&#x2F;span&gt;&lt;span&gt; PARTUUID&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt; -o&lt;&#x2F;span&gt;&lt;span&gt; value &#x2F;dev&#x2F;sda3 &amp;gt; &#x2F;boot&#x2F;loader&#x2F;entries&#x2F;arch.conf
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;위 처럼 실행한 후 수정하면 편하다&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;&#x2F;boot&#x2F;loader&#x2F;loader.conf&lt;&#x2F;code&gt;를 수정&lt;&#x2F;p&gt;
+&lt;pre style=&quot;background-color:#2b303b;color:#c0c5ce;&quot;&gt;&lt;code&gt;&lt;span&gt;default arch
+&lt;&#x2F;span&gt;&lt;span&gt;timeout 1
+&lt;&#x2F;span&gt;&lt;span&gt;editor 0
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;h2 id=&quot;gui-설치&quot;&gt;&lt;a href=&quot;#gui-설치&quot; aria-label=&quot;gui-설치&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;GUI 설치&lt;&#x2F;h2&gt;
+&lt;p&gt;아치 위키를 참조해서 그래픽카드 드라이버 설치. 인텔이면 &lt;code&gt;mesa&lt;&#x2F;code&gt;, &lt;code&gt;xf86-video-intel&lt;&#x2F;code&gt;을 설치하면 대충 된다.&lt;&#x2F;p&gt;
+&lt;p&gt;터치패드가 있다면 &lt;code&gt;xf86-input-synaptics&lt;&#x2F;code&gt; 설치&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;gnome&quot;&gt;&lt;a href=&quot;#gnome&quot; aria-label=&quot;gnome&quot;&gt;###&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;GNOME&lt;&#x2F;h3&gt;
+&lt;p&gt;아주 쉽다.&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;pacman -S&lt;&#x2F;span&gt;&lt;span&gt; gnome
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;systemctl&lt;&#x2F;span&gt;&lt;span&gt; enable gdm.service
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;h3 id=&quot;kde&quot;&gt;&lt;a href=&quot;#kde&quot; aria-label=&quot;kde&quot;&gt;###&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;KDE&lt;&#x2F;h3&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;X Server 설치&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;pacman -S&lt;&#x2F;span&gt;&lt;span&gt; xorg-server xorg-server-utils
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;plasma&lt;&#x2F;code&gt; 설치&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;plasma에 기본 프로그램이 하나도 없기 때문에 &lt;code&gt;konsole&lt;&#x2F;code&gt; 등의 기본 프로그램을 꼭 설치&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;언어팩 설치&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;pacman -S&lt;&#x2F;span&gt;&lt;span&gt; kde-l10n-ko
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;디스플레이 매니저 활성화&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;systemctl&lt;&#x2F;span&gt;&lt;span&gt; enable sddm.service
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;h3 id=&quot;xfce4&quot;&gt;&lt;a href=&quot;#xfce4&quot; aria-label=&quot;xfce4&quot;&gt;###&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;xfce4&lt;&#x2F;h3&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;X Server 설치&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;pacman -S&lt;&#x2F;span&gt;&lt;span&gt; xorg-server xorg-server-utils
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;xfce4&lt;&#x2F;code&gt; 설치&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;디스플레이 매니저를 설치해야한다. 만만한 GDM을 써보자&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;pacman -S&lt;&#x2F;span&gt;&lt;span&gt; gdm
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;systemctl&lt;&#x2F;span&gt;&lt;span&gt; enable gdm.service
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;h2 id=&quot;기타&quot;&gt;&lt;a href=&quot;#기타&quot; aria-label=&quot;기타&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;기타&lt;&#x2F;h2&gt;
+&lt;h3 id=&quot;linux-lts-설치&quot;&gt;&lt;a href=&quot;#linux-lts-설치&quot; aria-label=&quot;linux-lts-설치&quot;&gt;###&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;linux-lts 설치&lt;&#x2F;h3&gt;
+&lt;p&gt;&lt;code&gt;linux&lt;&#x2F;code&gt; 커널이 가끔 불안정할 때가 있어서 &lt;code&gt;linux-lts&lt;&#x2F;code&gt;를 선호&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;linux-lts&lt;&#x2F;code&gt; 패키지 설치&lt;&#x2F;li&gt;
+&lt;li&gt;부트로더가 linux-lts로 부팅하도록 설정
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;GRUB&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;&#x2F;etc&#x2F;default&#x2F;grub&lt;&#x2F;code&gt; 수정&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;GRUB_DISABLE_SUBMENU&lt;&#x2F;code&gt; : &lt;code&gt;y&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;linux와 lts 중 선택하여 부팅하고, 이전 선택을 기억하고 싶다면
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;GRUB_TIMEOUT&lt;&#x2F;code&gt; : 충분히 늘리기 (예: &lt;code&gt;4&lt;&#x2F;code&gt;)&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;code&gt;GRUB_DEFAULT&lt;&#x2F;code&gt; : &lt;code&gt;saved&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;code&gt;GRUB_SAVEDEFAULT&lt;&#x2F;code&gt; : &lt;code&gt;true&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;lts로만 부팅하고 싶다면
+&lt;ul&gt;
+&lt;li&gt;lts로 부팅하고 &lt;code&gt;linux&lt;&#x2F;code&gt;를 삭제&lt;&#x2F;li&gt;
+&lt;li&gt;또는 &lt;code&gt;GRUB_DEFAULT&lt;&#x2F;code&gt;를 lts로 바꾸기&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;설정파일 생성&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;grub-mkconfig -o&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;boot&#x2F;grub&#x2F;grub.cfg
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;systemd-boot&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;&#x2F;boot&#x2F;loader&#x2F;entries&#x2F;arch-lts.conf&lt;&#x2F;code&gt; 파일 생성&lt;&#x2F;p&gt;
+&lt;pre style=&quot;background-color:#2b303b;color:#c0c5ce;&quot;&gt;&lt;code&gt;&lt;span&gt;title Arch Linux LTS
+&lt;&#x2F;span&gt;&lt;span&gt;linux &#x2F;vmlinuz-linux-lts
+&lt;&#x2F;span&gt;&lt;span&gt;initrd &#x2F;initramfs-linux-lts.img
+&lt;&#x2F;span&gt;&lt;span&gt;options root=PARTUUID=(root 파티션의 PARTUUID) rw
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;기본으로 부팅하고 싶다면 &lt;code&gt;&#x2F;boot&#x2F;loader&#x2F;loader.conf&lt;&#x2F;code&gt; 수정&lt;&#x2F;p&gt;
+&lt;pre style=&quot;background-color:#2b303b;color:#c0c5ce;&quot;&gt;&lt;code&gt;&lt;span&gt;default arch-lts
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;...
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;h2 id=&quot;설치-중-문제가-발생했을-때&quot;&gt;&lt;a href=&quot;#설치-중-문제가-발생했을-때&quot; aria-label=&quot;설치-중-문제가-발생했을-때&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;설치 중 문제가 발생했을 때&lt;&#x2F;h2&gt;
+&lt;h3 id=&quot;pgp-키-에러가-날때&quot;&gt;&lt;a href=&quot;#pgp-키-에러가-날때&quot; aria-label=&quot;pgp-키-에러가-날때&quot;&gt;###&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;PGP 키 에러가 날때&lt;&#x2F;h3&gt;
+&lt;p&gt;&lt;code&gt;archlinux-keyring&lt;&#x2F;code&gt;, &lt;code&gt;gnome-keyring&lt;&#x2F;code&gt;을 재설치하고 다시 해보자&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="ko_KR">
+        <title>Arch with RAID 0</title>
+        <published>2018-10-26T00:00:00+00:00</published>
+        <updated>2018-10-26T00:00:00+00:00</updated>
+        <author>
+          <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://pbzweihander.github.io/post/arch-raid0/" type="text/html"/>
+        <id>https://pbzweihander.github.io/post/arch-raid0/</id>
+        
+        <content type="html">&lt;p&gt;RAID 0로 Arch Linux 설치하기&lt;&#x2F;p&gt;
+&lt;p&gt;2개의 디스크가 각각 &lt;code&gt;sda&lt;&#x2F;code&gt;, &lt;code&gt;sdb&lt;&#x2F;code&gt; 라고 가정하고,&lt;br &#x2F;&gt;
+&lt;code&gt;sda1&lt;&#x2F;code&gt; 을 boot, &lt;code&gt;sdb1&lt;&#x2F;code&gt; 을 swap으로 설정, 디스크의 남은 공간 &lt;code&gt;sda2&lt;&#x2F;code&gt;, &lt;code&gt;sdb2&lt;&#x2F;code&gt; 를 RAID 0로 묶는다.&lt;&#x2F;p&gt;
+&lt;p&gt;자세하게 설명되지 않은 것들은 &lt;a href=&quot;&#x2F;arch-linux-installation&#x2F;&quot;&gt;Arch Linux Installation&lt;&#x2F;a&gt; 참고&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;UEFI로 부팅되었는지 체크&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;Wifi가 필요하다면 연결&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;시계 업데이트&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;디스크 파티셔닝&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;cgdisk&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;dev&#x2F;sda
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;ul&gt;
+&lt;li&gt;&#x2F;dev&#x2F;sda1 : 1GB (넉넉잡아 2GB도 무방할 듯), EFI System (EF00)&lt;&#x2F;li&gt;
+&lt;li&gt;&#x2F;dev&#x2F;sda2 : Linux filesystem (8300, default)&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;cgdisk&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;dev&#x2F;sdb
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;ul&gt;
+&lt;li&gt;&#x2F;dev&#x2F;sdb1 : depends on RAM, Linux swap (8200)&lt;&#x2F;li&gt;
+&lt;li&gt;&#x2F;dev&#x2F;sdb2 : Linux filesystem (8300, default)&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;RAID 0로 묶기&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;modprobe&lt;&#x2F;span&gt;&lt;span&gt; raid0
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;mdadm --create&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;dev&#x2F;md0&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt; --level&lt;&#x2F;span&gt;&lt;span&gt;=0&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt; --raid-devices&lt;&#x2F;span&gt;&lt;span&gt;=2 &#x2F;dev&#x2F;sda2 &#x2F;dev&#x2F;sdb2
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;파티션 포맷 및 마운트&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;mkfs.fat -F32&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;dev&#x2F;sda1
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;mkswap&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;dev&#x2F;sdb1
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;mkfs.ext4&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;dev&#x2F;md0
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;mount&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;dev&#x2F;md0 &#x2F;mnt
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;mkdir&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;mnt&#x2F;boot
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;mount&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;dev&#x2F;sda1 &#x2F;mnt&#x2F;boot
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;swapon&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;dev&#x2F;sdb1
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;기본 패키지 설치&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;mdadm 설정&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;설정 파일 생성&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;mdadm --examine --scan &lt;&#x2F;span&gt;&lt;span&gt;&amp;gt; &#x2F;mnet&#x2F;etc&#x2F;dadm.conf
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;rc.conf 수정&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;nano&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;mnt&#x2F;etc&#x2F;rc.conf
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;MODULES&lt;&#x2F;code&gt; : &lt;code&gt;(raid0)&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;mkinitcpio.conf 수정&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#2b303b;color:#c0c5ce;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#bf616a;&quot;&gt;nano&lt;&#x2F;span&gt;&lt;span&gt; &#x2F;mnt&#x2F;etc&#x2F;mkinitcpio.conf
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;MODULES&lt;&#x2F;code&gt; : &lt;code&gt;(dm_mod)&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;code&gt;HOOKS&lt;&#x2F;code&gt; : &lt;code&gt;filesystems&lt;&#x2F;code&gt; 앞에 &lt;code&gt;mdadm&lt;&#x2F;code&gt; 추가
+&lt;ul&gt;
+&lt;li&gt;예: &lt;code&gt;HOOKS=(base udev autodetect modconf block mdadm filesystems keyboard fsck)&lt;&#x2F;code&gt;&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;fstab 파일 생성&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;설치한 리눅스로 chroot&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;p&gt;이후는 &lt;a href=&quot;&#x2F;arch-linux-installation&#x2F;&quot;&gt;Arch Linux Installation&lt;&#x2F;a&gt;를 따르면 된다.&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="ko_KR">
+        <title>군인처럼 메일 작성하기</title>
+        <published>2017-10-30T00:00:00+00:00</published>
+        <updated>2017-10-30T00:00:00+00:00</updated>
+        <author>
+          <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://pbzweihander.github.io/post/how-to-write-email-with-military-precision/" type="text/html"/>
+        <id>https://pbzweihander.github.io/post/how-to-write-email-with-military-precision/</id>
+        
+        <content type="html">&lt;p&gt;이 글은 Kabir Sehgal의 &lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;hbr.org&#x2F;2016&#x2F;11&#x2F;how-to-write-email-with-military-precision&quot;&gt;How to Write Email with Military Precision&lt;&#x2F;a&gt; 을 보고, 대충 번역하여 작성한 글입니다.&lt;&#x2F;p&gt;
+&lt;hr &#x2F;&gt;
+&lt;p&gt;군대에서는, 잘못 작성한 메일은 임무의 실패로 직결된다. 그래서 항상 간결하고 명확하며 수신자로 하여금 자신의 의도를 빠르게 전달할 수 있도록 적어야하고, 이러한 기술은 군인이 아니더라도 충분히 활용할 수 있다. 군인처럼 메일을 작성할 수 있는 팁 세 가지를 소개한다.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;1-jemoge-kihweddereul-pohamhagi&quot;&gt;&lt;a href=&quot;#1-jemoge-kihweddereul-pohamhagi&quot; aria-label=&quot;1-jemoge-kihweddereul-pohamhagi&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;1. 제목에 키워드를 포함하기&lt;&#x2F;h2&gt;
+&lt;p&gt;당신이 메일을 보내면 수신자는 가장 먼저 당신의 이름과 메일의 제목을 보게된다. 그러므로 제목에는 메일의 의도를 명시할 필요가 있다. 군인들은 메일의 내용을 한눈에 드러내기 위해 다음과 같은 키워드를 사용한다:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;행동(ACTION) : 수신자는 어떠한 행동을 할 필요가 있다&lt;&#x2F;li&gt;
+&lt;li&gt;결재(SIGN) : 수신자의 결재가 필요하다&lt;&#x2F;li&gt;
+&lt;li&gt;정보(INFO) : 단순히 정보 제공이 목적으로, 회신이나 행동을 할 필요는 없다&lt;&#x2F;li&gt;
+&lt;li&gt;결단(DECISION) : 수신자의 결단이 필요하다&lt;&#x2F;li&gt;
+&lt;li&gt;요구(REQUEST) : 수신자의 허가나 승인을 요구한다&lt;&#x2F;li&gt;
+&lt;li&gt;조정(COORD) : 수신자와의 조정 또는 수신자에 의한 조장이 필요하다&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;예를들어, 현재 상태를 단순히 보고하는 메일을 보낼때는 제목을 &lt;code&gt;정보 - 상태 보고&lt;&#x2F;code&gt; 라고 짓는다. 혹은 당신이 휴가를 내고 싶어 상사에게 그 허가를 요청하고 싶다면 제목을 &lt;code&gt;요구 - 휴가&lt;&#x2F;code&gt; 라고 짓는다. 이런 방법은 어색해 보일 수 있으나, 이렇게 적은 메일 제목은 수신자에게 확실히 보일 것이고, 수신자가 메일에서 뭘 원하는 건지 알아내려고 씨름할 필요도 없어진다. 또한 메일을 적는 당신도 메일을 보내기 전에 자신이 수신자에게 무엇을 원하는건지 검토할 수 있다.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;2-bottom-line-up-front-bluf&quot;&gt;&lt;a href=&quot;#2-bottom-line-up-front-bluf&quot; aria-label=&quot;2-bottom-line-up-front-bluf&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;2. Bottom Line Up Front (BLUF)&lt;&#x2F;h2&gt;
+&lt;p&gt;BLUF는 메일의 처음에 나오는 짧은 문장을 의미한다. (군대에선 모든 것을 줄여서 말한다) 이 BLUF는 육하원칙(누가, 무엇을, 어디서, 언제, 왜, 어떻게) 메일의 목적과 수신자의 행동에 대해 명시한다. 효과적인 BLUF는 수신자에게 가장 중요한 정보를 함축하여 전달한다. &lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;static.e-publishing.af.mil&#x2F;production&#x2F;1&#x2F;saf_cn&#x2F;publication&#x2F;dafh33-337&#x2F;dafh33-337.pdf&quot;&gt;Air Force Handbook&lt;&#x2F;a&gt; 에서 발췌한 BLUF의 예를 보자:&lt;&#x2F;p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;BLUF: 13년 10월 29일 부터, 모든 Air Force Doctrine Document(AFDDs)는 폐지되었고, core doctrine volume과 doctrine annex로 대체되었다.&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;p&gt;이 BLUF는 독자가 빠르게 결정된 사실과 새 절차의 적용 시점을 이해할 수 있게 해준다. 독자는 왜 이러한 결정이 내려졌는지에 대한 배경을 구구절절 들을 필요 없이 일단 빠르게 정보를 얻고 이 사실이 자신에게 어떤 영향을 미치는지 이해할 수 있다.&lt;&#x2F;p&gt;
+&lt;p&gt;필자는 군대 밖에선 BLUF라는 약어는 사람들에게 혼란을 줄 수 있으므로, 볼드 처리된 &lt;code&gt;결론&lt;&#x2F;code&gt; 이라는 용어를 사용한다. (원문: Bottom Line) 필자가 실제로 사용한 BLUF의 예시이다:&lt;&#x2F;p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;제목: 정보 - 자택근무&lt;&#x2F;p&gt;
+&lt;p&gt;Shannon,&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;결론&lt;&#x2F;strong&gt; : 우리는 11월 1일부터, 직원들이 집에서 근무할 수 있는 일수를 일주일에 3일에서 1일로 줄일 것입니다.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;배경&lt;&#x2F;strong&gt; :&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;이 결정은 팀의 사기를 증진하고 협력을 증가시키기 위함입니다.&lt;&#x2F;li&gt;
+&lt;li&gt;경영위원회는 전원 이 결정을 지지했습니다.&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;&#x2F;blockquote&gt;
+&lt;p&gt;Shannon은 제목의 &lt;code&gt;정보&lt;&#x2F;code&gt; 라고 적혀있는 것을 보고 이 메일에 어떠한 답장도 필요 없음을 유추할 수 있다. 그리고 &lt;code&gt;결론&lt;&#x2F;code&gt; 덕분에 어떤 정보를 전달하려 하는지 바로 눈치챌 수 있다. 이 결정이 중대하고 앞으로의 근무에 많은 영향을 줄 것이기 때문에 이 결정이 이미 만장일치로 통과된 사항이라는 것과, 회사에 긍정적인 영향을 주기 위한 노력이었다는 것이 &lt;code&gt;배경&lt;&#x2F;code&gt; 에 주어져있다.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;3-ggyeonjejjeoi-ddoja&quot;&gt;&lt;a href=&quot;#3-ggyeonjejjeoi-ddoja&quot; aria-label=&quot;3-ggyeonjejjeoi-ddoja&quot;&gt;##&lt;&#x2F;a&gt;&lt;span&gt; &lt;&#x2F;span&gt;3. 경제적이 되자&lt;&#x2F;h2&gt;
+&lt;p&gt;군인들은 짧은 메일이 긴 메일보다 효과적이라는 사실을 안다. 그래서 모든 정보를 한 화면에 담아 수신자가 스크롤할 필요가 없도록 한다. 또한 문장을 쓸데없이 길게 만드는, 공군 매뉴얼의 말을 빌려, &amp;quot;문장을 늘리고 꼬이게 만들 뿐만 아니라, 탁하게(muddy) 만드&amp;quot;는 수동태의 사용을 지양한다. 대신에, 누가 행동을 한 것인지 명확한 능동태를 사용한다. &amp;quot;공장이 F18에 의해 폭격당했다&amp;quot;(원문: The factory was bombed by an F18) 대신에, &amp;quot;F18이 공장을 폭격했다&amp;quot;(원문: An F18 bombed the factory)라고 적는다.
+&lt;em&gt;(역자 - 영어의 문법은 동사가 앞에 오므로 원작자는 동사가 바로 올 수 있는 능동태(원문: active voice, which puts nouns ahead of verbs)를 사용하라고 했지만, 한국어는 그렇지 않다. 그래도 능동태의 사용은 한국어에서도 문장의 길이를 짧게하고 주어와 객체의 관계를 명확히 하므로 능동태의 사용이 좋을 것이다)&lt;&#x2F;em&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;짧은 메일이 더 효율적이어도, 군대에선 긴 메일도 많이 사용한다. 만약 어떤 메일이 많은 설명을 필요로 하면, 위의 필자의 예 처럼 당신은 BLUF 뒤에 배경 정보를 적어야할 것이다.&lt;&#x2F;p&gt;
+&lt;p&gt;마지막으로, 수신자의 메일 수신함이 엉망이 되는 것을 막기 위해, 군인들은 보통 첨부파일을 이용하는 것 보다 파일로 연결할 수 있는 링크를 선호한다. 이는 나중에 파일이 업데이트되어도 수신자가 가장 최신의 파일을 빠르게 받을 수 있게 해준다. 또한 파일이 있는 링크에서 이 링크를 연 사람이 정말 수신자가 맞는지, 수신자가 이 파일을 볼 권한이 있는지 인증할 수도 있다.&lt;&#x2F;p&gt;
+&lt;p&gt;군인처럼 메일을 작성하면, 당신은 당신의 동료와 고객에게 당신의 간결하고 명확한 메일을 소개할 수 있을 것이다.(원문: you will introduce a kernel of clarity to your correspondence and that of your colleagues and clients)&lt;&#x2F;p&gt;
+&lt;hr &#x2F;&gt;
+&lt;p&gt;출처&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;hbr.org&#x2F;2016&#x2F;11&#x2F;how-to-write-email-with-military-precision&quot;&gt;원문&lt;&#x2F;a&gt;
+&lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;www.lifehacker.jp&#x2F;2016&#x2F;12&#x2F;161214_military_mail.html&quot;&gt;원문의 일어 소개글&lt;&#x2F;a&gt;
+&lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;http:&#x2F;&#x2F;egloos.zum.com&#x2F;isao76&#x2F;v&#x2F;2620819&quot;&gt;일어 소개글의 번역&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+</feed>
