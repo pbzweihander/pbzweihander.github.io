@@ -5,6 +5,8 @@ date = "2023-11-14"
 taxonomies.tags = ["container", "devops", "foobar"]
 +++
 
+> 이 글은 제 개인 Discord server에서 [김지현 (simnalamburt)](https://hyeon.me) 님이 설명해주신 내용을 정리한 것입니다.
+
 Linux container의 세계를 여행하다보면, 여러가지 software들이 등장합니다.
 docker, containerd, runc, podman, CRI-O, nerdctl, ctr, crictl, ...
 이 많은 software들은 다 어떤 차이와 쓰임새가 있고, 왜 등장하게 된 걸까요?
